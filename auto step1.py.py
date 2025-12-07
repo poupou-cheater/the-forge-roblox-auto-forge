@@ -3,65 +3,56 @@ import time
 import pyautogui
 import random
 import win32gui
-import configparser
-import os  # <-- NOUVEL IMPORT NÉCESSAIRE
+import sys # Nécessaire pour sys.exit() en cas d'erreur ou d'arrêt
 from typing import Tuple 
 
-# --- FONCTION DE CHARGEMENT DE CONFIGURATION ---
-def load_config(filename: str = 'config.cfg') -> Tuple:
-    """Charge les données de configuration depuis un fichier CFG et retourne les variables."""
-    config = configparser.ConfigParser()
+# =======================================================
+# === 1. CONFIGURATION INTERNE (FACILE À MODIFIER) ===
+# =======================================================
+
+CONFIG_DATA = {
+    # Coordonnées et limites
+    'BOUTON_START_X': 738,
+    'BOUTON_START_Y': 846,
+    'Y_TOP': 704,
+    'Y_DOWN': 1536,
+    'X_MIN': 700,
+    'X_MAX': 750,
     
-    # 1. DÉTERMINER LE CHEMIN ABSOLU DU FICHIER DE CONFIGURATION
-    # os.path.dirname(__file__) donne le répertoire où se trouve le script Python actuel.
-    # os.path.join construit le chemin complet.
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(script_dir, filename)
+    # Paramètres de l'application et de la vitesse
+    'APP_TARGET': "Roblox",
+    'DURATION_DOWN': 0.05, 
+    'DURATION_UP': 0.01, 
+    'TWEEN': None # Mettre 'None' (str) ou 'linear', 'easeInQuad', etc.
+}
 
-    # 2. Tenter de lire le fichier en utilisant le chemin absolu
-    if not config.read(config_path):
-        # Affiche le chemin exact où il a cherché, ce qui est très utile pour le débogage.
-        print(f"Erreur: Le fichier de configuration '{filename}' est introuvable ou vide au chemin: {config_path}")
-        print("Veuillez créer un fichier 'config.cfg' avec les sections [COORDINATES] et [SETTINGS] DANS LE MÊME DOSSIER QUE LE SCRIPT.")
-        exit() 
+# =======================================================
+# === 2. DÉCLARATION ET INITIALISATION DES VARIABLES ===
+# =======================================================
 
-    # --- Lecture des coordonnées (le reste est inchangé) ---
-    try:
-        coords = config['COORDINATES']
-        
-        BOUTON_START = (coords.getint('BOUTON_START_X'), coords.getint('BOUTON_START_Y')) 
-        Y_TOP = coords.getint('Y_TOP')
-        Y_DOWN = coords.getint('Y_DOWN')
-        X_MIN = coords.getint('X_MIN')
-        X_MAX = coords.getint('X_MAX')
-    except Exception as e:
-        print(f"Erreur lors de la lecture des coordonnées: {e}. Vérifiez la section [COORDINATES].")
-        exit()
+# Récupération des variables à partir du dictionnaire (Conversion automatique des types)
+APP_TARGET = CONFIG_DATA['APP_TARGET']
 
-    # --- Lecture des paramètres (le reste est inchangé) ---
-    try:
-        settings = config['SETTINGS']
-        
-        DURATION_DOWN = settings.getfloat('DURATION_DOWN')
-        DURATION_UP = settings.getfloat('DURATION_UP')
-        TWEEN = settings.get('TWEEN')
-        if TWEEN and TWEEN.lower() == 'none':
-            TWEEN = None
-            
-        APP_TARGET = settings.get('APP_TARGET')
-    except Exception as e:
-        print(f"Erreur lors de la lecture des paramètres: {e}. Vérifiez la section [SETTINGS].")
-        exit()
+# Tuple de coordonnées
+BOUTON_START = (CONFIG_DATA['BOUTON_START_X'], CONFIG_DATA['BOUTON_START_Y']) 
 
-    print(f"Configuration chargée avec succès depuis {config_path}.")
-    return APP_TARGET, BOUTON_START, Y_TOP, Y_DOWN, X_MIN, X_MAX, DURATION_DOWN, DURATION_UP, TWEEN
+# Coordonnées simples
+Y_TOP = CONFIG_DATA['Y_TOP']
+Y_DOWN = CONFIG_DATA['Y_DOWN']
+X_MIN = CONFIG_DATA['X_MIN']
+X_MAX = CONFIG_DATA['X_MAX']
 
-# ... (le reste de votre script principal) ...
+# Durées et transition
+DURATION_DOWN = CONFIG_DATA['DURATION_DOWN']
+DURATION_UP = CONFIG_DATA['DURATION_UP']
+TWEEN = CONFIG_DATA['TWEEN'] # Python gère déjà le None si vous l'avez écrit comme tel.
 
-# --- CHARGEMENT DES VARIABLES AU DÉBUT DU SCRIPT ---
-APP_TARGET, BOUTON_START, Y_TOP, Y_DOWN, X_MIN, X_MAX, DURATION_DOWN, DURATION_UP, TWEEN = load_config()
+# Nettoyage des imports inutiles pour cette méthode : configparser et os sont retirés.
 
-# Début de la logique principale
+# =======================================================
+# === 3. LOGIQUE PRINCIPALE DU SCRIPT ===
+# =======================================================
+
 print("-" * 30)
 print(f"Application cible : {APP_TARGET}")
 print(f"Coordonnées de départ : {BOUTON_START}")
@@ -120,3 +111,6 @@ finally:
     # S'assure de relâcher le clic en cas d'arrêt du script
     if click_held:
         pyautogui.mouseUp(button='left')
+
+# L'appel à sys.exit(1) est nécessaire seulement dans la fonction load_config
+# s'il y a des erreurs critiques. Dans le code principal, les exceptions gèrent l'arrêt.
